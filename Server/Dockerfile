@@ -2,7 +2,6 @@ FROM index.alauda.cn/lmh5257/django-on-docker
 
 MAINTAINER Komey <lmh5257@live.cn>
 
-RUN rm -rf /home/docker/code/app
 
 ADD . /home/docker/code/ 
 
