@@ -109,7 +109,6 @@ def adddata(request):
 def getdata(request):
     DeviceID = request.REQUEST.get('deviceid','')
     Count =int(request.REQUEST.get('count','10'))
-    From = int(request.REQUEST.get('from','0'))
     Date = request.REQUEST.get('date','')
     if DeviceID =='':
         return HttpResponse('{error:1004,maeeage:missing some part}')
@@ -117,9 +116,9 @@ def getdata(request):
     val['error'] = 2000
 
     if Date == '':
-        data = DD.objects.filter(device_id = DeviceID).order_by('-date')[From::Count]
+        data = DD.objects.filter(device_id = DeviceID).order_by('-date')[:Count]
     else:
-        data = DD.objects.filter(device_id = DeviceID,date__contains = Date)[From::Count]
+        data = DD.objects.filter(device_id = DeviceID,date__contains = Date)[:Count]
 
     ldata = []
     for d in data:
