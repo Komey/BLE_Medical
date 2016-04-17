@@ -1,23 +1,50 @@
+# -*- coding: utf-8 -*-
 from django.shortcuts import render
 from django.http import HttpResponse
 from API.models import device_data as DD,user_info as UI
 import json,datetime
+from django.views.decorators.csrf import csrf_exempt
 # Create your views here.
+
+def returnError(code):
+    """
+    返回错误信息
+    :param code:错误码
+    :return: JSON打包后消息体
+    """
+    val = {
+        1001:'Unknow username',
+        1002:'worng password',
+        1003:'User name excepted',
+        1004:'missing some part',
+        1005:'Topic excepted',
+        1006:'Unknow Topic',
+        2000:'Success',
+        2001:'Data saved.',
+    }
+    msg = {}
+    msg['code'] = code
+    msg['message'] = val[code]
+    return json.dumps(msg)
+
+
+
+@csrf_exempt
 def login(request):
     UserName = request.REQUEST.get('username','')
     PassWord = request.REQUEST.get('password','')
     Location = request.REQUEST.get('location','')
     if UserName =='' or PassWord =='':
-        return HttpResponse('{error:1004,maeeage:missing some part}')
+        return HttpResponse(returnError(1004))
     try:
         info = UI.objects.get(username = UserName)
         if info.password != PassWord:
-            return HttpResponse('{error:1002,maeeage:worng password}')
+            return HttpResponse(returnError(1002))
         else:
             info.location = Location
             info.save()
             val = {}
-            val['error'] = 2000
+            val['code'] = 2000
 
             data = {
                 'username':info.username,
@@ -26,32 +53,34 @@ def login(request):
             val['message'] = data
             return  HttpResponse(json.dumps(val))
     except:
-        return HttpResponse('{error:1001,maeeage:Unknow username}')
+        return HttpResponse(returnError(1001))
 
+@csrf_exempt
 def logon(request):
     UserName = request.REQUEST.get('username','')
     PassWord = request.REQUEST.get('password','')
     if UserName =='' or PassWord =='':
-        return HttpResponse('{error:1004,maeeage:missing some part}')
+        return HttpResponse(returnError(1004))
     try:
         user = UI.objects.get(username = UserName)
-        return HttpResponse('{error:1003,message:User name excepted}')
+        return HttpResponse(returnError(1003))
     except:
         newuser = UI(username = UserName,password = PassWord,location = '',sub_topic = '[]')
         newuser.save()
-        return HttpResponse('{error:2000,message:Success!}')
+        return HttpResponse(returnError(2000))
 
+@csrf_exempt
 def adddevice(request):
     UserName = request.REQUEST.get('username','')
     Topic = request.REQUEST.get('topic','')
     Qos = request.REQUEST.get('qos','0')
     Retain = request.REQUEST.get('retain','0')
     if UserName =='' or Topic =='':
-        return HttpResponse('{error:1004,maeeage:missing some part}')
+        return HttpResponse(returnError(1004))
     try:
         user = UI.objects.get(username = UserName)
         val = {}
-        val['error'] = 2000
+        val['code'] = 2000
         newdata = {
             'topic':Topic,
             'qos':Qos,
@@ -60,26 +89,27 @@ def adddevice(request):
         strtopic = user.sub_topic
         listopic = json.loads(strtopic)
         if listopic.count(newdata) > 0:
-            return HttpResponse('{error:1005,maeeage:Topic excepted}')
+            return HttpResponse(returnError(1005))
         listopic.append(newdata)
         user.sub_topic = json.dumps(listopic)
         user.save()
         val['message'] = listopic
         return HttpResponse(json.dumps(val))
     except:
-        return HttpResponse('{error:1001,maeeage:Unknow username}')
+        return HttpResponse(returnError(1001))
 
+@csrf_exempt
 def deldevice(request):
     UserName = request.REQUEST.get('username','')
     Topic = request.REQUEST.get('topic','')
     Qos = request.REQUEST.get('qos','0')
     Retain = request.REQUEST.get('retain','0')
     if UserName =='' or Topic =='':
-        return HttpResponse('{error:1004,maeeage:missing some part}')
+        return HttpResponse(returnError(1004))
     try:
         user = UI.objects.get(username = UserName)
         val = {}
-        val['error'] = 2000
+        val['code'] = 2000
         deldata = {
             'topic':Topic,
             'qos':Qos,
@@ -93,27 +123,29 @@ def deldevice(request):
             user.save()
             val['message'] = listopic
             return HttpResponse(json.dumps(val))
-        return HttpResponse('{error:1006,maeeage:Unknow Topic}')
+        return HttpResponse(returnError(1006))
     except:
-        return HttpResponse('{error:1001,maeeage:Unknow username}')
+        return HttpResponse(returnError(1001))
 
+@csrf_exempt
 def adddata(request):
     DeviceID = request.REQUEST.get('deviceid','')
     HRM = request.REQUEST.get('hrm','')
     if HRM =='' or DeviceID =='':
-        return HttpResponse('{error:1004,maeeage:missing some part}')
+        return HttpResponse(returnError(1004))
     data = DD(device_id = DeviceID,hrm = HRM)
     data.save()
-    return HttpResponse('{error:2001,Data saved.}')
+    return HttpResponse(returnError(2001))
 
+@csrf_exempt
 def getdata(request):
     DeviceID = request.REQUEST.get('deviceid','')
     Count =int(request.REQUEST.get('count','10'))
     Date = request.REQUEST.get('date','')
     if DeviceID =='':
-        return HttpResponse('{error:1004,maeeage:missing some part}')
+        return HttpResponse(returnError(1004))
     val = {}
-    val['error'] = 2000
+    val['code'] = 2000
 
     if Date == '':
         data = DD.objects.filter(device_id = DeviceID).order_by('-date')[:Count]
